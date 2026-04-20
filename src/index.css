@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Cormorant Garamond", serif;
+  --font-sans: "Inter", sans-serif;
+  
+  --color-primary: #2D5A27;
+  --color-secondary: #8DB600;
+  --color-accent: #F4A460;
+  --color-bg-main: #F0F7EE;
+  --color-text-main: #1B3022;
+}
+
+@layer base {
+  body {
+    @apply font-serif bg-bg-main text-text-main;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary text-white rounded-full px-6 py-3 font-bold transition-all hover:scale-105 hover:bg-secondary shadow-lg active:scale-95;
+  }
+  
+  .card {
+    @apply bg-white rounded-[32px] shadow-sm border border-primary/5 overflow-hidden transition-all hover:shadow-md;
+  }
+
+  .nav-active {
+    @apply bg-primary text-white shadow-inner;
+  }
+
+  .nav-inactive {
+    @apply text-primary/60 hover:bg-primary/5 hover:text-primary;
+  }
+}

@@ -1,0 +1,129 @@
+import i18n from 'i18next';
+import { initReactI18next } from 'react-i18next';
+import LanguageDetector from 'i18next-browser-languagedetector';
+
+const resources = {
+  en: {
+    translation: {
+      welcome: "Welcome to FloraCare AI",
+      identify: "Identify Plant",
+      myPlants: "My Garden",
+      chat: "AI Assistant",
+      profile: "Profile",
+      history: "History",
+      wateringReminder: "Watering Reminders",
+      careInstructions: "Care Instructions",
+      notes: "Notes",
+      addPlant: "Add Custom Plant",
+      search: "Search plants...",
+      login: "Sign in with Google",
+      logout: "Sign Out",
+      identifyPrompt: "Take a photo or upload an image to identify your plant.",
+      identifying: "Identifying...",
+      noPlants: "No plants in your garden yet.",
+      knowledge: "Plant Knowledge",
+      aroundYou: "Plants Around You",
+      settings: "Settings",
+      language: "Language",
+      notifications: "Notifications",
+      save: "Save",
+      cancel: "Cancel",
+      delete: "Delete",
+      edit: "Edit",
+      lastWatered: "Last Watered",
+      waterNow: "Water Now",
+      frequency: "Watering Frequency (days)",
+      scientificName: "Scientific Name",
+      description: "Description",
+      sunlight: "Sunlight",
+      temperature: "Temperature",
+      soil: "Soil",
+      watering: "Watering",
+      diagnose: "Diagnose Disease",
+      diagnosis: "Diagnosis",
+      symptoms: "Symptoms",
+      organic: "Organic Treatment",
+      chemical: "Chemical Treatment",
+      prevention: "Prevention",
+      seasonalTips: "Seasonal Tips",
+      planting: "Planting",
+      maintenance: "Maintenance",
+      harvesting: "Harvesting",
+      addTask: "Add Task",
+      pruning: "Pruning",
+      fertilizing: "Fertilizing",
+      repotting: "Repotting",
+      other: "Other",
+      taskFrequency: "Frequency (Days)",
+      lastCompleted: "Last Completed"
+    }
+  },
+  ur: {
+    translation: {
+      welcome: "فلورا کیئر AI میں خوش آمدید",
+      identify: "پودے کی شناخت کریں",
+      myPlants: "میرا باغ",
+      chat: "AI اسسٹنٹ",
+      profile: "پروفائل",
+      history: "تاریخ",
+      wateringReminder: "پانی دینے کی یاد دہانی",
+      careInstructions: "دیکھ بھال کی ہدایات",
+      notes: "نوٹس",
+      addPlant: "اپنی مرضی کا پودا شامل کریں",
+      search: "پودے تلاش کریں...",
+      login: "گوگل کے ساتھ سائن ان کریں",
+      logout: "سائن آؤٹ",
+      identifyPrompt: "اپنے پودے کی شناخت کے لیے تصویر لیں یا اپ لوڈ کریں۔",
+      identifying: "شناخت ہو رہی ہے...",
+      noPlants: "آپ کے باغ میں ابھی تک کوئی پودا نہیں ہے۔",
+      knowledge: "پودوں کا علم",
+      aroundYou: "آپ کے آس پاس کے پودے",
+      settings: "ترتیبات",
+      language: "زبان",
+      notifications: "اطلاعات",
+      save: "محفوظ کریں",
+      cancel: "منسوخ کریں",
+      delete: "حذف کریں",
+      edit: "ترمیم کریں",
+      lastWatered: "آخری بار پانی دیا",
+      waterNow: "ابھی پانی دیں",
+      frequency: "پانی دینے کی فریکوئنسی (دن)",
+      scientificName: "سائنسی نام",
+      description: "تفصیل",
+      sunlight: "سورج کی روشنی",
+      temperature: "درجہ حرارت",
+      soil: "مٹی",
+      watering: "پانی دینا",
+      diagnose: "بیماری کی تشخیص کریں",
+      diagnosis: "تشخیص",
+      symptoms: "علامات",
+      organic: "نامیاتی علاج",
+      chemical: "کیمیائی علاج",
+      prevention: "احتیاط",
+      seasonalTips: "موسمی مشورے",
+      planting: "شجرکاری",
+      maintenance: "دیکھ بھال",
+      harvesting: "کٹائی",
+      addTask: "کام شامل کریں",
+      pruning: "کانٹ چھانٹ",
+      fertilizing: "کھاد ڈالنا",
+      repotting: "گملہ بدلنا",
+      other: "دیگر",
+      taskFrequency: "فریکوئنسی (دن)",
+      lastCompleted: "آخری بار مکمل کیا"
+    }
+  }
+};
+
+i18n
+  .use(LanguageDetector)
+  .use(initReactI18next)
+  .init({
+    resources,
+    fallbackLng: 'en',
+    interpolation: {
+      escapeValue: false
+    }
+  });
+
+export default i18n;
