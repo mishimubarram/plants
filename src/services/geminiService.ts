@@ -1,6 +1,19 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+let aiInstance: GoogleGenAI | null = null;
+const getAI = () => {
+  if (!aiInstance) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    aiInstance = new GoogleGenAI({ apiKey: apiKey || 'DUMMY_KEY_TO_PREVENT_CRASH' });
+  }
+  return aiInstance;
+};
+
+const ai = new Proxy({} as GoogleGenAI, {
+  get(target, prop, receiver) {
+    return Reflect.get(getAI(), prop, receiver);
+  }
+});
 
 export const identifyPlant = async (imageBase64: string) => {
   const imagePart = {
