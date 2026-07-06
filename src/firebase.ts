@@ -1,22 +1,68 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
-import { getFirestore, collection, doc, getDoc, setDoc, updateDoc, deleteDoc, query, where, onSnapshot, addDoc, serverTimestamp, getDocFromServer, orderBy, limit, collectionGroup } from 'firebase/firestore';
-
-// Import the Firebase configuration
+import {
+  getFirestore,
+  collection,
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
+  onSnapshot,
+  addDoc,
+  serverTimestamp,
+  getDocFromServer,
+  orderBy,
+  limit,
+  collectionGroup
+} from 'firebase/firestore';
 import firebaseConfig from '../firebase-applet-config.json';
 
-// Initialize Firebase SDK
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app, (firebaseConfig as any).firestoreDatabaseId || '(default)');
 export const auth = getAuth(app);
 
-export const signIn = () => {
-  const provider = new GoogleAuthProvider();
-  provider.setCustomParameters({ prompt: 'select_account' });
-  return signInWithPopup(auth, provider);
-};
-export const logOut = () => signOut(auth);
+// Authentication Functions
+const provider = new GoogleAuthProvider();
 
+export async function signIn() {
+  try {
+    await signInWithPopup(auth, provider);
+  } catch (error) {
+    console.error("Sign in failed:", error);
+  }
+}
+
+export async function logOut() {
+  try {
+    await signOut(auth);
+  } catch (error) {
+    console.error("Sign out failed:", error);
+  }
+}
+
+// Re-export Firestore functions so App.tsx can import them directly
+export {
+  collection,
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
+  onSnapshot,
+  addDoc,
+  serverTimestamp,
+  orderBy,
+  limit,
+  collectionGroup
+};
+
+// Error Handling helper
 export enum OperationType {
   CREATE = 'create',
   UPDATE = 'update',
@@ -31,18 +77,16 @@ export interface FirestoreErrorInfo {
   operationType: OperationType;
   path: string | null;
   authInfo: {
-    userId: string | undefined;
-    email: string | null | undefined;
-    emailVerified: boolean | undefined;
-    isAnonymous: boolean | undefined;
-    tenantId: string | null | undefined;
-    providerInfo: {
-      providerId: string;
-      displayName: string | null;
-      email: string | null;
-      photoUrl: string | null;
+    userId?: string | null;
+    email?: string | null;
+    emailVerified?: boolean | null;
+    isAnonymous?: boolean | null;
+    tenantId?: string | null;
+    providerInfo?: {
+      providerId?: string | null;
+      email?: string | null;
     }[];
-  }
+  };
 }
 
 export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
@@ -54,33 +98,26 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
       emailVerified: auth.currentUser?.emailVerified,
       isAnonymous: auth.currentUser?.isAnonymous,
       tenantId: auth.currentUser?.tenantId,
-      providerInfo: auth.currentUser?.providerData.map(provider => ({
+      providerInfo: auth.currentUser?.providerData?.map(provider => ({
         providerId: provider.providerId,
-        displayName: provider.displayName,
         email: provider.email,
-        photoUrl: provider.photoURL
       })) || []
     },
     operationType,
     path
-  }
-  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  };
+  console.error('Database connection error details: ', JSON.stringify(errInfo));
   throw new Error(JSON.stringify(errInfo));
 }
 
-// Test connection
+// Validate Connection to Firestore on startup
 async function testConnection() {
   try {
     await getDocFromServer(doc(db, 'test', 'connection'));
-    console.log("Firestore connection successful");
   } catch (error) {
-    if(error instanceof Error && error.message.includes('the client is offline')) {
-      console.error("Please check your Firebase configuration. The client is offline.");
-    } else {
-      console.warn("Firestore connection test failed (this is normal if 'test/connection' doesn't exist):", error);
+    if (error instanceof Error && error.message.includes('the client is offline')) {
+      console.error("Please check your Firebase configuration.");
     }
   }
 }
 testConnection();
-
-export { collection, doc, getDoc, setDoc, updateDoc, deleteDoc, query, where, onSnapshot, addDoc, serverTimestamp, orderBy, limit, collectionGroup };
