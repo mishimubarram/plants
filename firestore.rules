@@ -57,6 +57,15 @@ service cloud.firestore {
              data.content is string && data.content.size() > 0 && data.content.size() < 1000;
     }
 
+    function isValidReminder(data) {
+      return data.keys().hasAll(['type', 'time', 'enabled', 'plantName', 'userId', 'plantId', 'createdAt']) &&
+             data.userId == request.auth.uid &&
+             data.time is string && data.time.size() > 0 &&
+             data.enabled is bool &&
+             data.plantName is string &&
+             data.plantId is string;
+    }
+
     // Rules
     match /users/{userId} {
       allow read: if isOwner(userId);
@@ -66,6 +75,12 @@ service cloud.firestore {
         allow read: if isOwner(userId);
         allow create, update: if isOwner(userId) && isValidPlant(request.resource.data);
         allow delete: if isOwner(userId);
+
+        match /reminders/{reminderId} {
+          allow read: if isOwner(userId);
+          allow create, update: if isOwner(userId) && isValidReminder(request.resource.data);
+          allow delete: if isOwner(userId);
+        }
       }
 
       match /chat/{messageId} {

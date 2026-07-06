@@ -4,16 +4,16 @@
   --font-serif: "Cormorant Garamond", serif;
   --font-sans: "Inter", sans-serif;
   
-  --color-primary: #2D5A27;
-  --color-secondary: #8DB600;
-  --color-accent: #F4A460;
+  --color-primary: #1E3D1A;
+  --color-secondary: #709300;
+  --color-accent: #E67E22;
   --color-bg-main: #F0F7EE;
-  --color-text-main: #1B3022;
+  --color-text-main: #0D1B13;
 }
 
 @layer base {
   body {
-    @apply font-serif bg-bg-main text-text-main;
+    @apply font-serif bg-bg-main text-text-main antialiased;
   }
 }
 
@@ -23,7 +23,7 @@
   }
   
   .card {
-    @apply bg-white rounded-[32px] shadow-sm border border-primary/5 overflow-hidden transition-all hover:shadow-md;
+    @apply bg-white rounded-[32px] shadow-sm border border-primary/10 overflow-hidden transition-all hover:shadow-md;
   }
 
   .nav-active {
@@ -31,6 +31,6 @@
   }
 
   .nav-inactive {
-    @apply text-primary/60 hover:bg-primary/5 hover:text-primary;
+    @apply text-primary/80 hover:bg-primary/10 hover:text-primary font-medium;
   }
 }

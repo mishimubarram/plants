@@ -48,7 +48,7 @@ export const getPlantAssistantResponse = async (history: { role: "user" | "model
   const chat = ai.chats.create({
     model: "gemini-3-flash-preview",
     config: {
-      systemInstruction: `You are FloraCare AI, a professional gardening assistant. 
+      systemInstruction: `You are Botanic AI, a professional gardening assistant. 
       Your goal is to provide helpful, accurate, and easy-to-understand advice about plant care, identification, and gardening.
       
       Guidelines for your responses:

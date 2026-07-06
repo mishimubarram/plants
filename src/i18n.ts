@@ -5,7 +5,7 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 const resources = {
   en: {
     translation: {
-      welcome: "Welcome to FloraCare AI",
+      welcome: "Welcome to Botanic AI",
       identify: "Identify Plant",
       myPlants: "My Garden",
       chat: "AI Assistant",
@@ -55,12 +55,19 @@ const resources = {
       repotting: "Repotting",
       other: "Other",
       taskFrequency: "Frequency (Days)",
-      lastCompleted: "Last Completed"
+      lastCompleted: "Last Completed",
+      home: "Home",
+      healthAdvice: "Health Advice",
+      careGuides: "Care Guides",
+      community: "Community",
+      back: "Back",
+      databaseStatus: "Database Status",
+      connected: "Connected"
     }
   },
   ur: {
     translation: {
-      welcome: "فلورا کیئر AI میں خوش آمدید",
+      welcome: "Botanic AI میں خوش آمدید",
       identify: "پودے کی شناخت کریں",
       myPlants: "میرا باغ",
       chat: "AI اسسٹنٹ",
@@ -110,7 +117,14 @@ const resources = {
       repotting: "گملہ بدلنا",
       other: "دیگر",
       taskFrequency: "فریکوئنسی (دن)",
-      lastCompleted: "آخری بار مکمل کیا"
+      lastCompleted: "آخری بار مکمل کیا",
+      home: "ہوم",
+      healthAdvice: "صحت کے مشورے",
+      careGuides: "دیکھ بھال کی گائیڈز",
+      community: "کمیونٹی",
+      back: "واپس",
+      databaseStatus: "ڈیٹا بیس کی حالت",
+      connected: "منسلک"
     }
   }
 };

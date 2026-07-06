@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { auth, db, doc, getDoc, setDoc, handleFirestoreError, OperationType } from '../firebase';
+import { auth, db, doc, getDoc, setDoc, onSnapshot, handleFirestoreError, OperationType } from '../firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
 
 export function useAuth() {
@@ -8,39 +8,46 @@ export function useAuth() {
   const [profile, setProfile] = useState<any>(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (u) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, (u) => {
       setUser(u);
-      if (u) {
-        const path = `users/${u.uid}`;
-        try {
-          const userDoc = await getDoc(doc(db, 'users', u.uid));
-          if (userDoc.exists()) {
-            setProfile(userDoc.data());
-          } else {
-            const newProfile = {
-              uid: u.uid,
-              displayName: u.displayName,
-              email: u.email,
-              photoURL: u.photoURL,
-              preferences: {
-                language: 'en',
-                notifications: true
-              }
-            };
-            await setDoc(doc(db, 'users', u.uid), newProfile);
-            setProfile(newProfile);
-          }
-        } catch (error) {
-          handleFirestoreError(error, OperationType.GET, path);
-        }
-      } else {
+      if (!u) {
         setProfile(null);
+        setLoading(false);
       }
+    });
+
+    return () => unsubscribeAuth();
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const path = `users/${user.uid}`;
+    const unsubscribeProfile = onSnapshot(doc(db, 'users', user.uid), async (docSnap) => {
+      if (docSnap.exists()) {
+        setProfile(docSnap.data());
+      } else {
+        const newProfile = {
+          uid: user.uid,
+          displayName: user.displayName,
+          email: user.email,
+          photoURL: user.photoURL,
+          preferences: {
+            language: 'en',
+            notifications: true
+          }
+        };
+        await setDoc(doc(db, 'users', user.uid), newProfile);
+        setProfile(newProfile);
+      }
+      setLoading(false);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, path);
       setLoading(false);
     });
 
-    return () => unsubscribe();
-  }, []);
+    return () => unsubscribeProfile();
+  }, [user]);
 
   return { user, profile, loading };
 }

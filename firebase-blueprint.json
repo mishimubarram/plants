@@ -110,6 +110,21 @@
         "content": { "type": "string" },
         "timestamp": { "type": "string", "format": "date-time" }
       }
+    },
+    "Reminder": {
+      "title": "Watering Reminder",
+      "description": "A reminder to water or care for a plant.",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string" },
+        "time": { "type": "string" },
+        "enabled": { "type": "boolean" },
+        "plantName": { "type": "string" },
+        "userId": { "type": "string" },
+        "plantId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["type", "time", "enabled", "plantName", "userId", "plantId"]
     }
   },
   "firestore": {
@@ -120,6 +135,10 @@
     "/users/{userId}/plants/{plantId}": {
       "schema": "Plant",
       "description": "User's plant collection"
+    },
+    "/users/{userId}/plants/{plantId}/reminders/{reminderId}": {
+      "schema": "Reminder",
+      "description": "Watering reminders set for a plant"
     },
     "/users/{userId}/chat/{messageId}": {
       "schema": "ChatMessage",

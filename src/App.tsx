@@ -130,20 +130,35 @@ export default function App() {
       
       if (currentTime === lastTriggeredMinute.current) return;
 
+      console.log(`Checking alarms at ${currentTime}... Total reminders: ${reminders.length}`);
+
       reminders.forEach(rem => {
-        if (rem.enabled && rem.time === currentTime) {
+        // Clean the stored time in case it has different format
+        const remTime = rem.time?.trim();
+        if (rem.enabled && remTime === currentTime) {
+          console.log(`ALARM TRIGGERED for ${rem.plantName} at ${currentTime}`);
           setActiveAlarm(rem);
           lastTriggeredMinute.current = currentTime;
         }
       });
     };
 
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        checkAlarms();
+      }
+    };
+
     // Check immediately
     checkAlarms();
 
     const interval = setInterval(checkAlarms, 10000); // Check every 10 seconds
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [reminders]);
 
   const navigateTo = (page: Page) => {
@@ -172,22 +187,22 @@ export default function App() {
   }
 
   return (
-    <div className="flex h-screen flex-col bg-bg-main font-serif text-text-main md:flex-row">
+    <div className="flex h-screen flex-col bg-bg-main font-serif text-text-main md:flex-row" dir={i18n.language === 'ur' ? 'rtl' : 'ltr'}>
       {/* Sidebar for Desktop */}
       <nav className="hidden w-64 flex-col border-r border-primary/10 bg-white p-6 md:flex">
         <div className="mb-10 flex items-center gap-2 text-primary">
           <Leaf className="h-8 w-8" />
-          <h1 className="text-2xl font-bold tracking-tight">FloraCare AI</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Botanic AI</h1>
         </div>
         
         <div className="flex flex-1 flex-col gap-2 overflow-y-auto pr-2">
-          <NavButton active={activePage === 'home'} onClick={() => navigateTo('home')} icon={<Sprout />} label={t('welcome')} />
+          <NavButton active={activePage === 'home'} onClick={() => navigateTo('home')} icon={<Sprout />} label={t('home')} />
           <NavButton active={activePage === 'identify'} onClick={() => navigateTo('identify')} icon={<Camera />} label={t('identify')} />
           <NavButton active={activePage === 'diagnose'} onClick={() => navigateTo('diagnose')} icon={<AlertTriangle />} label={t('diagnose')} />
-          <NavButton active={activePage === 'health'} onClick={() => navigateTo('health')} icon={<Sparkles />} label="Health Advice" />
+          <NavButton active={activePage === 'health'} onClick={() => navigateTo('health')} icon={<Sparkles />} label={t('healthAdvice')} />
           <NavButton active={activePage === 'garden'} onClick={() => navigateTo('garden')} icon={<Leaf />} label={t('myPlants')} />
-          <NavButton active={activePage === 'guides'} onClick={() => navigateTo('guides')} icon={<BookOpen />} label="Care Guides" />
-          <NavButton active={activePage === 'community'} onClick={() => navigateTo('community')} icon={<Users />} label="Community" />
+          <NavButton active={activePage === 'guides'} onClick={() => navigateTo('guides')} icon={<BookOpen />} label={t('careGuides')} />
+          <NavButton active={activePage === 'community'} onClick={() => navigateTo('community')} icon={<Users />} label={t('community')} />
           <NavButton active={activePage === 'chat'} onClick={() => navigateTo('chat')} icon={<MessageSquare />} label={t('chat')} />
           <NavButton active={activePage === 'profile'} onClick={() => navigateTo('profile')} icon={<UserIcon />} label={t('profile')} />
         </div>
@@ -211,7 +226,7 @@ export default function App() {
             className="mb-6 flex items-center gap-2 rounded-full bg-white px-4 py-2 text-primary shadow-sm border border-primary/5 transition-transform hover:scale-105"
           >
             <ArrowLeft className="h-4 w-4" />
-            <span className="text-sm font-bold">Back</span>
+            <span className="text-sm font-bold">{t('back')}</span>
           </button>
         )}
         <AnimatePresence mode="wait">
@@ -379,7 +394,7 @@ function HomePage({ plants, localKnowledge, onNavigate, location, onSetReminder,
       <header className="flex items-center justify-between">
         <div>
           <h2 className="text-4xl font-bold text-primary">{t('welcome')}</h2>
-          <p className="text-primary/70">Your personal botanical garden is thriving.</p>
+          <p className="text-primary/90 font-medium">Your personal botanical garden is thriving.</p>
         </div>
         <div className="flex items-center gap-4">
           <button 
@@ -405,7 +420,7 @@ function HomePage({ plants, localKnowledge, onNavigate, location, onSetReminder,
                   <Clock className="h-6 w-6 text-accent" />
                   <h3 className="text-2xl font-bold text-primary">Priority Tasks</h3>
                 </div>
-                <span className="text-xs font-bold uppercase tracking-widest text-primary/30">Due Today</span>
+                <span className="text-xs font-bold uppercase tracking-widest text-primary/60">Due Today</span>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 {needsWater.map(p => (
@@ -623,6 +638,9 @@ function ReminderModal({ plant, onClose, onTestAlarm }: { plant: any; onClose: (
         type: 'watering',
         time,
         enabled: true,
+        plantName: plant.plantName, // Redundant but safer for the listener
+        userId: plant.userId,
+        plantId: plant.plantId,
         createdAt: new Date().toISOString()
       });
       onClose();
@@ -792,8 +810,8 @@ function DiagnosePage() {
               <img src={image} alt="Preview" className="h-full w-full object-cover" />
             ) : (
               <>
-                <Camera className="mb-4 h-12 w-12 text-accent/20 group-hover:text-accent" />
-                <p className="text-center text-accent/70">Upload a photo of the affected area</p>
+                <Camera className="mb-4 h-12 w-12 text-accent/50 group-hover:text-accent" />
+                <p className="text-center text-accent/90 font-medium">Upload a photo of the affected area</p>
               </>
             )}
             <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
@@ -825,7 +843,7 @@ function DiagnosePage() {
             <h3 className="mb-2 text-3xl font-bold text-accent">{result.diagnosis}</h3>
             
             <div className="mb-6">
-              <h4 className="text-sm font-bold uppercase tracking-wider text-primary/50 mb-2">{t('symptoms')}</h4>
+              <h4 className="text-sm font-bold uppercase tracking-wider text-primary/80 mb-2">{t('symptoms')}</h4>
               <ul className="list-inside list-disc space-y-1 text-text-main">
                 {result.symptoms.map((s: string, i: number) => <li key={i}>{s}</li>)}
               </ul>
@@ -931,8 +949,8 @@ function IdentifyPage({ user, onPlantAdded }: { user: any; onPlantAdded: () => v
               <img src={image} alt="Preview" className="h-full w-full object-cover" />
             ) : (
               <>
-                <Camera className="mb-4 h-12 w-12 text-primary/50 group-hover:text-primary" />
-                <p className="text-center text-primary/70">{t('identifyPrompt')}</p>
+                <Camera className="mb-4 h-12 w-12 text-primary/60 group-hover:text-primary" />
+                <p className="text-center text-primary/90 font-medium">{t('identifyPrompt')}</p>
               </>
             )}
             <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
@@ -967,7 +985,7 @@ function IdentifyPage({ user, onPlantAdded }: { user: any; onPlantAdded: () => v
             <div className="mb-6 flex items-start justify-between">
               <div>
                 <h3 className="text-3xl font-bold text-text-main">{result.name}</h3>
-                <p className="italic text-primary/70">{result.scientificName}</p>
+                <p className="italic text-primary/90 font-medium">{result.scientificName}</p>
               </div>
               <div className="flex items-center gap-2 rounded-full bg-blue-50 px-4 py-2 text-blue-600">
                 <Droplets className="h-4 w-4" />
@@ -1010,12 +1028,12 @@ function IdentifyPage({ user, onPlantAdded }: { user: any; onPlantAdded: () => v
 
 function CareItem({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="flex gap-3 rounded-2xl bg-bg-main/50 p-4 border border-primary/5">
+    <div className="flex gap-3 rounded-2xl bg-bg-main/50 p-4 border border-primary/10">
       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-primary shadow-sm">
         {icon}
       </div>
       <div>
-        <p className="text-xs font-bold uppercase tracking-wider text-primary/50">{label}</p>
+        <p className="text-xs font-bold uppercase tracking-wider text-primary/80">{label}</p>
         <p className="text-sm font-medium text-text-main">{value}</p>
       </div>
     </div>
@@ -1087,8 +1105,8 @@ function GardenPage({ plants, searchQuery, setSearchQuery, user, onSetReminder }
               </div>
               <div className="p-5">
                 <h4 className="text-xl font-bold text-text-main">{p.name}</h4>
-                <p className="text-sm italic text-primary/60">{p.scientificName}</p>
-                <div className="mt-4 flex items-center justify-between text-xs font-medium text-primary/70">
+                <p className="text-sm italic text-primary/80 font-medium">{p.scientificName}</p>
+                <div className="mt-4 flex items-center justify-between text-xs font-bold text-primary">
                   <div className="flex items-center gap-1">
                     <History className="h-3 w-3" />
                     <span>{new Date(p.lastWatered).toLocaleDateString()}</span>
@@ -1188,34 +1206,34 @@ function GardenPage({ plants, searchQuery, setSearchQuery, user, onSetReminder }
 
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <label className="block text-xs font-bold uppercase text-primary/50 mb-1">Name</label>
-                      <input name="name" required className="w-full rounded-xl border border-primary/10 bg-bg-main p-3 outline-none focus:border-primary" />
+                      <label className="block text-xs font-bold uppercase text-primary/80 mb-1">Name</label>
+                      <input name="name" required className="w-full rounded-xl border border-primary/10 bg-bg-main p-3 outline-none focus:border-primary text-text-main" />
                     </div>
                     <div>
-                      <label className="block text-xs font-bold uppercase text-primary/50 mb-1">Scientific Name</label>
-                      <input name="scientificName" className="w-full rounded-xl border border-primary/10 bg-bg-main p-3 outline-none focus:border-primary" />
+                      <label className="block text-xs font-bold uppercase text-primary/80 mb-1">Scientific Name</label>
+                      <input name="scientificName" className="w-full rounded-xl border border-primary/10 bg-bg-main p-3 outline-none focus:border-primary text-text-main" />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold uppercase text-primary/50 mb-1">Watering Frequency (Days)</label>
-                    <input name="frequency" type="number" defaultValue={7} required className="w-full rounded-xl border border-primary/10 bg-bg-main p-3 outline-none focus:border-primary" />
+                    <label className="block text-xs font-bold uppercase text-primary/80 mb-1">Watering Frequency (Days)</label>
+                    <input name="frequency" type="number" defaultValue={7} required className="w-full rounded-xl border border-primary/10 bg-bg-main p-3 outline-none focus:border-primary text-text-main" />
                   </div>
 
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <label className="block text-xs font-bold uppercase text-primary/50 mb-1">Watering Guide</label>
-                      <input name="watering" placeholder="e.g. Keep soil moist" className="w-full rounded-xl border border-primary/10 bg-bg-main p-3 outline-none focus:border-primary" />
+                      <label className="block text-xs font-bold uppercase text-primary/80 mb-1">Watering Guide</label>
+                      <input name="watering" placeholder="e.g. Keep soil moist" className="w-full rounded-xl border border-primary/10 bg-bg-main p-3 outline-none focus:border-primary text-text-main" />
                     </div>
                     <div>
-                      <label className="block text-xs font-bold uppercase text-primary/50 mb-1">Sunlight Guide</label>
-                      <input name="sunlight" placeholder="e.g. Bright indirect" className="w-full rounded-xl border border-primary/10 bg-bg-main p-3 outline-none focus:border-primary" />
+                      <label className="block text-xs font-bold uppercase text-primary/80 mb-1">Sunlight Guide</label>
+                      <input name="sunlight" placeholder="e.g. Bright indirect" className="w-full rounded-xl border border-primary/10 bg-bg-main p-3 outline-none focus:border-primary text-text-main" />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold uppercase text-primary/50 mb-1">Description</label>
-                    <textarea name="description" className="w-full rounded-xl border border-primary/10 bg-bg-main p-3 outline-none focus:border-primary" rows={2} />
+                    <label className="block text-xs font-bold uppercase text-primary/80 mb-1">Description</label>
+                    <textarea name="description" className="w-full rounded-xl border border-primary/10 bg-bg-main p-3 outline-none focus:border-primary text-text-main" rows={2} />
                   </div>
 
                   <div className="flex gap-3 pt-4">
@@ -1445,7 +1463,7 @@ function ChatPage({ user }: { user: any }) {
           <MessageSquare className="h-5 w-5" />
         </div>
         <div>
-          <h3 className="font-bold text-text-main">FloraCare AI Assistant</h3>
+          <h3 className="font-bold text-text-main">Botanic AI Assistant</h3>
           <p className="text-xs text-primary/50">Ask me anything about your plants</p>
         </div>
       </div>
@@ -1526,11 +1544,11 @@ function ProfilePage({ user, profile, onNavigate }: { user: any; profile: any; o
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Settings className="h-5 w-5 text-primary" />
-                <h4 className="font-bold text-text-main">Database Status</h4>
+                <h4 className="font-bold text-text-main">{t('databaseStatus')}</h4>
               </div>
               <div className="flex items-center gap-2">
                 <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                <span className="text-xs font-bold text-green-600">Connected</span>
+                <span className="text-xs font-bold text-green-600">{t('connected')}</span>
               </div>
             </div>
 
@@ -1641,14 +1659,14 @@ function GuidesPage() {
         <h2 className="text-3xl font-bold text-primary">Plant Care Guides</h2>
         <div className="flex gap-2 w-full md:w-auto">
           <div className="relative flex-1 md:w-64">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary/40" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary/60" />
             <input 
               type="text" 
               placeholder="Search guides..." 
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleAiSearch()}
-              className="w-full rounded-full border border-primary/10 bg-white py-2 pl-10 pr-4 outline-none focus:border-primary focus:ring-2 focus:ring-primary/5"
+              className="w-full rounded-full border border-primary/20 bg-white py-2 pl-10 pr-4 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 text-text-main"
             />
           </div>
           <button 
@@ -1814,7 +1832,7 @@ function PostCard({ post, user, onLike }: { post: any; user: any; onLike: () => 
         <img src={post.userAvatar || 'https://i.pravatar.cc/150'} alt={post.userName} className="h-10 w-10 rounded-full" />
         <div>
           <h4 className="font-bold text-text-main">{post.userName}</h4>
-          <span className="text-xs text-primary/40">{new Date(post.createdAt).toLocaleString()}</span>
+          <span className="text-xs text-primary/70 font-medium">{new Date(post.createdAt).toLocaleString()}</span>
         </div>
       </div>
       <div className="px-4 pb-4">
@@ -1829,8 +1847,8 @@ function PostCard({ post, user, onLike }: { post: any; user: any; onLike: () => 
         <button 
           onClick={onLike}
           className={cn(
-            "flex items-center gap-2 text-sm font-medium transition-colors",
-            isLiked ? "text-red-500" : "text-primary/60 hover:text-primary"
+            "flex items-center gap-2 text-sm font-bold transition-colors",
+            isLiked ? "text-red-500" : "text-primary/80 hover:text-primary"
           )}
         >
           <Heart className={cn("h-5 w-5", isLiked && "fill-current")} />
@@ -1838,7 +1856,7 @@ function PostCard({ post, user, onLike }: { post: any; user: any; onLike: () => 
         </button>
         <button 
           onClick={() => setShowComments(!showComments)}
-          className="flex items-center gap-2 text-sm font-medium text-primary/60 hover:text-primary"
+          className="flex items-center gap-2 text-sm font-bold text-primary/80 hover:text-primary"
         >
           <MessageSquare className="h-5 w-5" />
           <span>Comment</span>
