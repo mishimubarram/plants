@@ -58,11 +58,10 @@ service cloud.firestore {
     }
 
     function isValidReminder(data) {
-      return data.keys().hasAll(['type', 'time', 'enabled', 'plantName', 'userId', 'plantId', 'createdAt']) &&
+      return data.keys().hasAll(['type', 'time', 'enabled', 'userId', 'plantId', 'createdAt']) &&
              data.userId == request.auth.uid &&
              data.time is string && data.time.size() > 0 &&
              data.enabled is bool &&
-             data.plantName is string &&
              data.plantId is string;
     }
 

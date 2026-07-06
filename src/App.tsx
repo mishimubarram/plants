@@ -117,6 +117,8 @@ export default function App() {
           const otherReminders = prev.filter(rem => rem.plantId !== plant.id);
           return [...otherReminders, ...r];
         });
+      }, (error) => {
+        console.error(`Error listening to reminders at ${path}:`, error);
       });
     });
 
@@ -627,19 +629,22 @@ function NotificationModal({ needsWater, upcomingTasks, onClose }: { needsWater:
 }
 
 function ReminderModal({ plant, onClose, onTestAlarm }: { plant: any; onClose: () => void; onTestAlarm: (alarm: any) => void }) {
+  const { user } = useAuth();
   const [time, setTime] = useState('09:00');
   const [loading, setLoading] = useState(false);
 
   const handleSetReminder = async () => {
+    if (!user) return;
     setLoading(true);
-    const path = `users/${plant.userId}/plants/${plant.plantId}/reminders`;
+    const targetUserId = plant.userId || user.uid;
+    const path = `users/${targetUserId}/plants/${plant.plantId}/reminders`;
     try {
-      await addDoc(collection(db, 'users', plant.userId, 'plants', plant.plantId, 'reminders'), {
+      await addDoc(collection(db, 'users', targetUserId, 'plants', plant.plantId, 'reminders'), {
         type: 'watering',
         time,
         enabled: true,
-        plantName: plant.plantName, // Redundant but safer for the listener
-        userId: plant.userId,
+        plantName: plant.plantName || plant.name || 'My Plant', // Safe fallback
+        userId: targetUserId,
         plantId: plant.plantId,
         createdAt: new Date().toISOString()
       });
@@ -1417,6 +1422,8 @@ function ChatPage({ user }: { user: any }) {
       const unsubscribe = onSnapshot(q, (snapshot) => {
         const m = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setMessages(m.sort((a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()));
+      }, (error) => {
+        console.error("Error listening to chat messages:", error);
       });
       return () => unsubscribe();
     }
@@ -1801,6 +1808,8 @@ function PostCard({ post, user, onLike }: { post: any; user: any; onLike: () => 
       const q = query(collection(db, 'posts', post.id, 'comments'), orderBy('createdAt', 'asc'));
       const unsubscribe = onSnapshot(q, (snapshot) => {
         setComments(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      }, (error) => {
+        console.error(`Error listening to comments for post ${post.id}:`, error);
       });
       return unsubscribe;
     }
