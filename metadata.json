@@ -1,5 +1,6 @@
 {
   "name": "Botanic AI",
   "description": "Your personal gardening assistant. Identify plants from photos, get detailed care instructions, set watering reminders, and chat with an AI plant expert.",
-  "requestFramePermissions": ["camera", "geolocation"]
+  "requestFramePermissions": ["camera", "geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
