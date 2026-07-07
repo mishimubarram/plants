@@ -43,7 +43,7 @@ import {
   AlarmClock
 } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
-import { signIn, logOut, db, collection, query, where, onSnapshot, addDoc, serverTimestamp, doc, updateDoc, deleteDoc, getDoc, handleFirestoreError, OperationType, orderBy, limit } from './firebase';
+import { signIn, signInAsGuest, logOut, db, collection, query, where, onSnapshot, addDoc, serverTimestamp, doc, updateDoc, deleteDoc, getDoc, handleFirestoreError, OperationType, orderBy, limit } from './firebase';
 import { identifyPlant, diagnosePlant, getPlantAssistantResponse, getLocalPlantsKnowledge, getSeasonalTips, getPlantHealthAdvice, getPlantCareGuide } from './services/geminiService';
 import Markdown from 'react-markdown';
 import { cn } from './lib/utils';
@@ -64,7 +64,31 @@ export default function App() {
   const [showReminderModal, setShowReminderModal] = useState<any>(null);
   const [reminders, setReminders] = useState<any[]>([]);
   const [activeAlarm, setActiveAlarm] = useState<any>(null);
+  const [loginError, setLoginError] = useState<string | null>(null);
   const lastTriggeredMinute = useRef<string>('');
+
+  const handleSignIn = async () => {
+    setLoginError(null);
+    try {
+      await signIn();
+    } catch (err: any) {
+      console.error("Sign in failed:", err);
+      if (err?.code === 'auth/unauthorized-domain' || err?.message?.includes('unauthorized-domain')) {
+        setLoginError("This local IP address (or domain) is not authorized in your Firebase Console. Under 'Authentication > Settings > Authorized domains', add this IP/domain to whitelist it, or simply use the Guest Mode below!");
+      } else {
+        setLoginError(err?.message || "Failed to sign in. Please try again.");
+      }
+    }
+  };
+
+  const handleGuestSignIn = async () => {
+    setLoginError(null);
+    try {
+      await signInAsGuest();
+    } catch (err: any) {
+      setLoginError(err?.message || "Failed to sign in as guest.");
+    }
+  };
 
   useEffect(() => {
     if (user) {
@@ -241,19 +265,42 @@ export default function App() {
             className="mx-auto max-w-4xl"
           >
             {!user && activePage !== 'profile' ? (
-              <div className="flex flex-col items-center justify-center py-20 text-center">
+              <div className="flex flex-col items-center justify-center py-10 px-6 text-center max-w-xl mx-auto bg-white/60 backdrop-blur-md rounded-3xl border border-primary/10 shadow-xl">
                 <Leaf className="mb-6 h-16 w-16 text-primary" />
                 <h2 className="mb-4 text-3xl font-bold text-primary">{t('welcome')}</h2>
-                <p className="mb-8 max-w-md text-primary/70">
+                <p className="mb-8 text-primary/70">
                   {t('identifyPrompt')}
                 </p>
-                <button 
-                  onClick={signIn}
-                  className="flex items-center gap-3 rounded-full bg-primary px-8 py-4 text-white transition-transform hover:scale-105 shadow-lg"
-                >
-                  <UserIcon className="h-5 w-5" />
-                  <span className="font-medium">{t('login')}</span>
-                </button>
+                
+                {loginError && (
+                  <div className="mb-6 p-4 rounded-2xl bg-red-50 border border-red-150 text-left text-sm text-red-700">
+                    <p className="font-semibold mb-1">Sign-in Notice:</p>
+                    <p className="leading-relaxed">{loginError}</p>
+                  </div>
+                )}
+
+                <div className="flex flex-col sm:flex-row w-full gap-4 justify-center">
+                  <button 
+                    onClick={handleSignIn}
+                    className="flex items-center justify-center gap-3 rounded-full bg-primary px-8 py-4 text-white transition-transform hover:scale-105 shadow-lg font-medium cursor-pointer"
+                  >
+                    <UserIcon className="h-5 w-5" />
+                    <span>{t('login')}</span>
+                  </button>
+
+                  <button 
+                    onClick={handleGuestSignIn}
+                    className="flex items-center justify-center gap-3 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-800 px-8 py-4 transition-transform hover:scale-105 font-medium cursor-pointer border border-slate-200 shadow-sm"
+                  >
+                    <UserIcon className="h-5 w-5 text-slate-500" />
+                    <span>Continue as Guest</span>
+                  </button>
+                </div>
+
+                <div className="mt-8 text-xs text-primary/50 text-center space-y-1">
+                  <p>🔒 Runs securely on Firebase Authentication</p>
+                  <p>💡 Tip: For network IPs like <code className="bg-primary/5 px-1 rounded font-mono">192.168.1.27</code>, use Guest Mode to bypass domain validation.</p>
+                </div>
               </div>
             ) : (
               <>
@@ -274,7 +321,7 @@ export default function App() {
                 {activePage === 'guides' && <GuidesPage />}
                 {activePage === 'community' && <CommunityPage user={user} />}
                 {activePage === 'chat' && <ChatPage user={user} />}
-                {activePage === 'profile' && <ProfilePage user={user} profile={profile} onNavigate={navigateTo} />}
+                {activePage === 'profile' && <ProfilePage user={user} profile={profile} onNavigate={navigateTo} loginError={loginError} handleSignIn={handleSignIn} handleGuestSignIn={handleGuestSignIn} />}
               </>
             )}
           </motion.div>
@@ -1523,7 +1570,21 @@ function ChatPage({ user }: { user: any }) {
   );
 }
 
-function ProfilePage({ user, profile, onNavigate }: { user: any; profile: any; onNavigate: (p: Page) => void }) {
+function ProfilePage({ 
+  user, 
+  profile, 
+  onNavigate,
+  loginError,
+  handleSignIn,
+  handleGuestSignIn
+}: { 
+  user: any; 
+  profile: any; 
+  onNavigate: (p: Page) => void;
+  loginError: string | null;
+  handleSignIn: () => Promise<void>;
+  handleGuestSignIn: () => Promise<void>;
+}) {
   const { t, i18n } = useTranslation();
 
   const updatePreference = async (key: string, value: any) => {
@@ -1606,15 +1667,39 @@ function ProfilePage({ user, profile, onNavigate }: { user: any; profile: any; o
           </button>
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <UserIcon className="mb-6 h-16 w-16 text-primary/20" />
-          <button 
-            onClick={signIn}
-            className="flex items-center gap-3 rounded-full bg-primary px-8 py-4 text-white transition-transform hover:scale-105 shadow-lg"
-          >
-            <UserIcon className="h-5 w-5" />
-            <span className="font-medium">{t('login')}</span>
-          </button>
+        <div className="flex flex-col items-center justify-center py-12 px-6 text-center max-w-md mx-auto bg-white/50 backdrop-blur-sm rounded-3xl border border-primary/10 shadow-md">
+          <UserIcon className="mb-4 h-12 w-12 text-primary/40 animate-pulse" />
+          <h3 className="text-xl font-bold text-primary mb-2">Sign in Required</h3>
+          <p className="text-sm text-primary/70 mb-6">Connect your account or choose guest mode to manage your personal garden and chat with AI.</p>
+          
+          {loginError && (
+            <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-100 text-left text-xs text-red-700">
+              <p className="font-semibold mb-1">Notice:</p>
+              <p>{loginError}</p>
+            </div>
+          )}
+
+          <div className="flex flex-col w-full gap-3">
+            <button 
+              onClick={handleSignIn}
+              className="flex items-center justify-center gap-3 rounded-full bg-primary px-6 py-3 text-white transition-transform hover:scale-105 shadow-md font-medium cursor-pointer text-sm"
+            >
+              <UserIcon className="h-4 w-4" />
+              <span>{t('login')}</span>
+            </button>
+            
+            <button 
+              onClick={handleGuestSignIn}
+              className="flex items-center justify-center gap-3 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-800 px-6 py-3 transition-transform hover:scale-105 font-medium cursor-pointer border border-slate-200 text-sm"
+            >
+              <UserIcon className="h-4 w-4 text-slate-500" />
+              <span>Continue as Guest</span>
+            </button>
+          </div>
+          
+          <p className="mt-4 text-[10px] text-primary/40">
+            For local network IPs (e.g., 192.168.1.27), please use Guest Mode.
+          </p>
         </div>
       )}
     </div>
