@@ -818,13 +818,17 @@ function DiagnosePage() {
   const [image, setImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => setImage(reader.result as string);
+      reader.onloadend = () => {
+        setImage(reader.result as string);
+        setError(null);
+      };
       reader.readAsDataURL(file);
     }
   };
@@ -832,12 +836,14 @@ function DiagnosePage() {
   const handleDiagnose = async () => {
     if (!image) return;
     setLoading(true);
+    setError(null);
     try {
       const base64 = image.split(',')[1];
       const data = await diagnosePlant(base64);
       setResult(data);
-    } catch (error) {
-      console.error(error);
+    } catch (err: any) {
+      console.error(err);
+      setError(err?.message || "Failed to diagnose plant");
     } finally {
       setLoading(false);
     }
@@ -846,12 +852,20 @@ function DiagnosePage() {
   const reset = () => {
     setResult(null);
     setImage(null);
+    setError(null);
   };
 
   return (
     <div className="space-y-8">
       <h2 className="text-3xl font-bold text-primary">{t('diagnose')}</h2>
       
+      {error && (
+        <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-left text-sm text-red-700 max-w-xl mx-auto shadow-sm">
+          <p className="font-semibold mb-1">Diagnosis Error:</p>
+          <p className="leading-relaxed">{error}</p>
+        </div>
+      )}
+
       {!result ? (
         <div className="flex flex-col items-center">
           <div 
@@ -935,6 +949,7 @@ function IdentifyPage({ user, onPlantAdded }: { user: any; onPlantAdded: () => v
   const [image, setImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -943,6 +958,7 @@ function IdentifyPage({ user, onPlantAdded }: { user: any; onPlantAdded: () => v
       const reader = new FileReader();
       reader.onloadend = () => {
         setImage(reader.result as string);
+        setError(null);
       };
       reader.readAsDataURL(file);
     }
@@ -951,12 +967,14 @@ function IdentifyPage({ user, onPlantAdded }: { user: any; onPlantAdded: () => v
   const handleIdentify = async () => {
     if (!image) return;
     setLoading(true);
+    setError(null);
     try {
       const base64 = image.split(',')[1];
       const data = await identifyPlant(base64);
       setResult(data);
-    } catch (error) {
-      console.error(error);
+    } catch (err: any) {
+      console.error(err);
+      setError(err?.message || "Failed to identify plant");
     } finally {
       setLoading(false);
     }
@@ -991,6 +1009,13 @@ function IdentifyPage({ user, onPlantAdded }: { user: any; onPlantAdded: () => v
     <div className="space-y-8">
       <h2 className="text-3xl font-bold text-primary">{t('identify')}</h2>
       
+      {error && (
+        <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-left text-sm text-red-700 max-w-xl mx-auto shadow-sm">
+          <p className="font-semibold mb-1">Identification Error:</p>
+          <p className="leading-relaxed">{error}</p>
+        </div>
+      )}
+
       {!result ? (
         <div className="flex flex-col items-center">
           <div 
@@ -1461,6 +1486,7 @@ function ChatPage({ user }: { user: any }) {
   const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -1485,6 +1511,7 @@ function ChatPage({ user }: { user: any }) {
     const userMsg = input;
     setInput('');
     setLoading(true);
+    setError(null);
 
     try {
       await addDoc(collection(db, 'users', user.uid, 'chat'), {
@@ -1503,8 +1530,9 @@ function ChatPage({ user }: { user: any }) {
         content: aiResponse,
         timestamp: new Date().toISOString()
       });
-    } catch (error) {
-      console.error(error);
+    } catch (err: any) {
+      console.error(err);
+      setError(err?.message || "Failed to get AI response");
     } finally {
       setLoading(false);
     }
@@ -1523,6 +1551,15 @@ function ChatPage({ user }: { user: any }) {
       </div>
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-4 bg-bg-main/30">
+        {error && (
+          <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-left text-sm text-red-700 max-w-xl mx-auto flex items-start justify-between shadow-sm">
+            <div>
+              <p className="font-semibold mb-1">Chat Error:</p>
+              <p className="leading-relaxed">{error}</p>
+            </div>
+            <button onClick={() => setError(null)} className="text-red-500 font-bold ml-2 text-lg hover:text-red-700">×</button>
+          </div>
+        )}
         {messages.map((m, i) => (
           <div key={i} className={cn(
             "flex w-full",
@@ -1710,6 +1747,7 @@ function GuidesPage() {
   const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   const initialGuides = [
     { name: 'Monstera Deliciosa', category: 'Indoor', light: 'Bright Indirect', water: 'Every 1-2 weeks', img: 'https://picsum.photos/seed/monstera/800/600', detail: 'Known for its iconic holes, the Monstera thrives in humid environments and likes to climb.' },
@@ -1729,6 +1767,7 @@ function GuidesPage() {
   const handleAiSearch = async () => {
     if (!search.trim()) return;
     setLoading(true);
+    setError(null);
     try {
       const result = await getPlantCareGuide(search);
       if (result) {
@@ -1738,8 +1777,9 @@ function GuidesPage() {
         });
         setSearch(result.name);
       }
-    } catch (error) {
-      console.error(error);
+    } catch (err: any) {
+      console.error(err);
+      setError(err?.message || "Failed to generate care guide");
     } finally {
       setLoading(false);
     }
@@ -1770,6 +1810,13 @@ function GuidesPage() {
           </button>
         </div>
       </div>
+
+      {error && (
+        <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-left text-sm text-red-700 max-w-xl mx-auto shadow-sm">
+          <p className="font-semibold mb-1">Care Guide Error:</p>
+          <p className="leading-relaxed">{error}</p>
+        </div>
+      )}
 
       {filtered.length === 0 && !loading && (
         <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -2093,13 +2140,17 @@ function HealthAdvicePage() {
   const [image, setImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => setImage(reader.result as string);
+      reader.onloadend = () => {
+        setImage(reader.result as string);
+        setError(null);
+      };
       reader.readAsDataURL(file);
     }
   };
@@ -2107,12 +2158,14 @@ function HealthAdvicePage() {
   const handleGetAdvice = async () => {
     if (!image) return;
     setLoading(true);
+    setError(null);
     try {
       const base64 = image.split(',')[1];
       const data = await getPlantHealthAdvice(base64);
       setResult(data);
-    } catch (error) {
-      console.error(error);
+    } catch (err: any) {
+      console.error(err);
+      setError(err?.message || "Failed to analyze plant health");
     } finally {
       setLoading(false);
     }
@@ -2124,6 +2177,13 @@ function HealthAdvicePage() {
         <Sparkles className="h-8 w-8 text-primary" />
         <h2 className="text-3xl font-bold text-primary">AI Health Optimizer</h2>
       </div>
+
+      {error && (
+        <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-left text-sm text-red-700 max-w-xl mx-auto shadow-sm">
+          <p className="font-semibold mb-1">Health Advice Error:</p>
+          <p className="leading-relaxed">{error}</p>
+        </div>
+      )}
 
       {!result ? (
         <div className="flex flex-col items-center">

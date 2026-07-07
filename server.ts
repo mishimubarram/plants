@@ -8,21 +8,23 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
 // Increase payload limits for base64 images
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// Initialize GoogleGenAI on the server side
+// Initialize GoogleGenAI dynamically on every request to reload .env configuration automatically
 const getAI = () => {
-  // Support different casing or names the user might have used in their .env file
+  // Reload .env file on every request to pick up changes live
+  dotenv.config({ override: true });
+  
   const apiKey = process.env.GEMINI_API_KEY || process.env.geminiAPI || process.env.GEMINI_API || process.env.gemini_api;
-  if (!apiKey) {
-    console.warn("WARNING: GEMINI_API_KEY environment variable is not set. Gemini features will fail.");
+  if (!apiKey || apiKey === 'your_actual_gemini_api_key_here' || apiKey === 'apki_gemini_api_key_yahan_likhein') {
+    throw new Error("GEMINI_API_KEY is missing or empty. Please create a '.env' file in your project root folder and add your key: GEMINI_API_KEY=AIzaSy...");
   }
   return new GoogleGenAI({
-    apiKey: apiKey || 'DUMMY_KEY_TO_PREVENT_CRASH',
+    apiKey: apiKey,
     httpOptions: {
       headers: {
         'User-Agent': 'aistudio-build'
@@ -31,12 +33,12 @@ const getAI = () => {
   });
 };
 
-const ai = getAI();
 const MODEL_NAME = 'gemini-3.5-flash';
 
 // API Routes
 app.post('/api/gemini/identify', async (req, res) => {
   try {
+    const ai = getAI();
     const { imageBase64 } = req.body;
     if (!imageBase64) {
       return res.status(400).json({ error: 'Image data is required' });
@@ -90,6 +92,7 @@ app.post('/api/gemini/identify', async (req, res) => {
 
 app.post('/api/gemini/chat', async (req, res) => {
   try {
+    const ai = getAI();
     const { history, message } = req.body;
     if (!message) {
       return res.status(400).json({ error: 'Message is required' });
@@ -122,6 +125,7 @@ app.post('/api/gemini/chat', async (req, res) => {
 
 app.post('/api/gemini/diagnose', async (req, res) => {
   try {
+    const ai = getAI();
     const { imageBase64 } = req.body;
     if (!imageBase64) {
       return res.status(400).json({ error: 'Image data is required' });
@@ -167,6 +171,7 @@ app.post('/api/gemini/diagnose', async (req, res) => {
 
 app.post('/api/gemini/health-advice', async (req, res) => {
   try {
+    const ai = getAI();
     const { imageBase64 } = req.body;
     if (!imageBase64) {
       return res.status(400).json({ error: 'Image data is required' });
@@ -214,6 +219,7 @@ app.post('/api/gemini/health-advice', async (req, res) => {
 
 app.post('/api/gemini/care-guide', async (req, res) => {
   try {
+    const ai = getAI();
     const { plantName } = req.body;
     if (!plantName) {
       return res.status(400).json({ error: 'Plant name is required' });
@@ -252,6 +258,7 @@ app.post('/api/gemini/care-guide', async (req, res) => {
 
 app.post('/api/gemini/seasonal-tips', async (req, res) => {
   try {
+    const ai = getAI();
     const { lat, lng, date } = req.body;
     if (lat === undefined || lng === undefined || !date) {
       return res.status(400).json({ error: 'Latitude, longitude, and date are required' });
@@ -289,6 +296,7 @@ app.post('/api/gemini/seasonal-tips', async (req, res) => {
 
 app.post('/api/gemini/local-knowledge', async (req, res) => {
   try {
+    const ai = getAI();
     const { lat, lng } = req.body;
     if (lat === undefined || lng === undefined) {
       return res.status(400).json({ error: 'Latitude and longitude are required' });
