@@ -2,6 +2,10 @@ import express from 'express';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI, Type } from '@google/genai';
+import dotenv from 'dotenv';
+
+// Load .env file
+dotenv.config();
 
 const app = express();
 const PORT = 3000;
@@ -12,7 +16,8 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Initialize GoogleGenAI on the server side
 const getAI = () => {
-  const apiKey = process.env.GEMINI_API_KEY;
+  // Support different casing or names the user might have used in their .env file
+  const apiKey = process.env.GEMINI_API_KEY || process.env.geminiAPI || process.env.GEMINI_API || process.env.gemini_api;
   if (!apiKey) {
     console.warn("WARNING: GEMINI_API_KEY environment variable is not set. Gemini features will fail.");
   }
